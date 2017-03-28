@@ -1,3 +1,6 @@
+![screenshot](https://github.com/kota/SushiKeshi/blob/master/screenshot.png)
+
+
 <kbd>h</kbd>: move left
 
 
