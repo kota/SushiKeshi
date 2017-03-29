@@ -51,7 +51,7 @@ class Ochimono
   end
 
   def fall_drops
-    landing = @drops.select { |drop| !can_fall?(drop) }.count != 0
+    landing = @drops.any? { |drop| !can_fall?(drop) }
     if landing
       @fixed_drops.concat(@drops)
       @drops = []
@@ -94,7 +94,7 @@ class Ochimono
   end
 
   def fixed?
-    @fixed_drops.select { |drop| can_fall?(drop) }.count == 0
+    @fixed_drops.none? { |drop| can_fall?(drop) }
   end
 
   def get_command
