@@ -51,22 +51,15 @@ class Ochimono
   end
 
   def fall_drops
-    @drops.each do |drop| 
-      if can_fall?(drop)
-        drop.y += Y_VELOCITY
-      else
-        drop.y = drop.y.floor
-        @fixed_drops << drop
-        @drops.delete(drop)
-      end
+    landing = @drops.select { |drop| !can_fall?(drop) }.count != 0
+    if landing
+      @fixed_drops.concat(@drops)
+      @drops = []
     end
 
-    @fixed_drops.each do |drop|
-      if can_fall?(drop)
-        drop.y += Y_VELOCITY
-      else
-        drop.y = drop.y.floor
-      end
+    (@drops + @fixed_drops).each do |drop|
+      drop.y += Y_VELOCITY if can_fall?(drop)
+      drop.y = drop.y.floor unless can_fall?(drop)
     end
   end
 
@@ -100,6 +93,10 @@ class Ochimono
     connected_drops
   end
 
+  def fixed?
+    @fixed_drops.select { |drop| can_fall?(drop) }.count == 0
+  end
+
   def get_command
     command = nil
     if @commands.include?(:left)
@@ -130,9 +127,9 @@ class Ochimono
       end
 
       fall_drops
-      remove_connected_drops
+      remove_connected_drops if fixed?
 
-      if @drops.empty?
+      if @drops.empty? && fixed?
         @drops = [Drop.new(2), Drop.new(3)]
       end
 
