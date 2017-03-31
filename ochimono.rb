@@ -130,40 +130,30 @@ class Ochimono
   end
 
   def get_command
-    command = nil
-    if @commands.include?(:left)
-      command = :left
-    elsif @commands.include?(:right)
-      command = :right
-    elsif @commands.include?(:rotate_left)
-      command = :rotate_left
-    elsif @commands.include?(:rotate_right)
-      command = :rotate_right
-    end
-    @commands = []
-
-    command
+    @commands.shift
   end
 
   def main_loop
     loop do
       clear_screen
 
-      case get_command
-      when :left
-        left_drop = @drops.sort_by(&:x)[0]
-        if left_drop && left_drop.x - 1 >= 0
-          @drops.each { |drop| drop.x -= 1}
+      while command = get_command
+        case command
+        when :left
+          left_drop = @drops.sort_by(&:x)[0]
+          if left_drop && left_drop.x - 1 >= 0
+            @drops.each { |drop| drop.x -= 1}
+          end
+        when :right
+          right_drop = @drops.sort_by(&:x).reverse[0]
+          if right_drop && right_drop.x + 1 < COLS
+            @drops.each { |drop| drop.x += 1}
+          end
+        when :rotate_left 
+          rotate_drops(:left)
+        when :rotate_right
+          rotate_drops(:right)
         end
-      when :right
-        right_drop = @drops.sort_by(&:x).reverse[0]
-        if right_drop && right_drop.x + 1 < COLS
-          @drops.each { |drop| drop.x += 1}
-        end
-      when :rotate_left 
-        rotate_drops(:left)
-      when :rotate_right
-        rotate_drops(:right)
       end
 
       fall_drops
