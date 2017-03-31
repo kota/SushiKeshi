@@ -51,8 +51,7 @@ class Ochimono
   end
 
   def fall_drops
-    landing = @drops.any? { |drop| !can_fall?(drop) }
-    if landing
+    if landing?
       @fixed_drops.concat(@drops)
       @drops = []
     end
@@ -93,8 +92,41 @@ class Ochimono
     connected_drops
   end
 
+  def landing?
+    @drops.any? { |drop| !can_fall?(drop) }
+  end
+
   def fixed?
     @fixed_drops.none? { |drop| can_fall?(drop) }
+  end
+
+  def valid_position?(x,y)
+    x >= 0 && x < COLS && y >= 0 && y < ROWS
+  end
+
+  def rotate_drops(direction)
+    return if landing? || @drops.empty?
+
+    center = @drops[0]
+    rotating = @drops[1]
+
+    dx = center.x - rotating.x
+    dy = center.y - rotating.y
+
+    relative_positions = [[0, -1], [1, 0], [0, 1], [-1, 0]]
+
+    if relative_position_index = relative_positions.index { |pos| (pos[0] - dx).abs < 0.1 && (pos[1] - dy).abs < 0.1 }
+      index_offset = direction == :left ? -1 : 1
+      rotated_position = relative_positions[(relative_position_index + index_offset) % relative_positions.size]
+
+      new_rotating_x = center.x + rotated_position[0]
+      new_rotating_y = center.y + rotated_position[1]
+      obstacle = @fixed_drops.find { |fixed_drop| fixed_drop.x == new_rotating_x && fixed_drop.y == new_rotating_y.ceil }
+      return if obstacle || !valid_position?(new_rotating_x, new_rotating_y)
+
+      rotating.x = new_rotating_x
+      rotating.y = new_rotating_y
+    end
   end
 
   def get_command
@@ -103,6 +135,10 @@ class Ochimono
       command = :left
     elsif @commands.include?(:right)
       command = :right
+    elsif @commands.include?(:rotate_left)
+      command = :rotate_left
+    elsif @commands.include?(:rotate_right)
+      command = :rotate_right
     end
     @commands = []
 
@@ -116,14 +152,18 @@ class Ochimono
       case get_command
       when :left
         left_drop = @drops.sort_by(&:x)[0]
-        if left_drop.x - 1 >= 0
+        if left_drop && left_drop.x - 1 >= 0
           @drops.each { |drop| drop.x -= 1}
         end
       when :right
         right_drop = @drops.sort_by(&:x).reverse[0]
-        if right_drop.x + 1 < COLS
+        if right_drop && right_drop.x + 1 < COLS
           @drops.each { |drop| drop.x += 1}
         end
+      when :rotate_left 
+        rotate_drops(:left)
+      when :rotate_right
+        rotate_drops(:right)
       end
 
       fall_drops
@@ -163,6 +203,10 @@ class Ochimono
         @commands << :right
       when 'h'
         @commands << :left
+      when 'j'
+        @commands << :rotate_left
+      when 'k'
+        @commands << :rotate_right
       when 'q'
         exit
       end
