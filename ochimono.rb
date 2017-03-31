@@ -19,12 +19,14 @@ class Ochimono
   ROWS = 12
   COLS = 6
 
-  Y_VELOCITY = 0.3
+  Y_VELOCITY = 0.1
 
   def initialize
     @drops = [Drop.new(2), Drop.new(3)]
     @fixed_drops = []
     @commands = []
+    @y_velocity = Y_VELOCITY
+    @score = 0
   end
 
   def clear_screen
@@ -41,6 +43,10 @@ class Ochimono
     end
   end
 
+  def draw_score
+    print "\e[0;#{(COLS + 1) * 2 + 2}Hscore:#{@score}\e[0;0H"
+  end
+
   def can_fall?(drop)
     @fixed_drops.each do |fixed_drop|
       next if drop == fixed_drop
@@ -54,10 +60,11 @@ class Ochimono
     if landing?
       @fixed_drops.concat(@drops)
       @drops = []
+      @y_velocity = Y_VELOCITY
     end
 
     (@drops + @fixed_drops).each do |drop|
-      drop.y += Y_VELOCITY if can_fall?(drop)
+      drop.y += @y_velocity if can_fall?(drop)
       drop.y = drop.y.floor unless can_fall?(drop)
     end
   end
@@ -129,6 +136,10 @@ class Ochimono
     end
   end
 
+  def acceralate_drops
+    @y_velocity = Y_VELOCITY * 10
+  end
+
   def get_command
     @commands.shift
   end
@@ -153,6 +164,8 @@ class Ochimono
           rotate_drops(:left)
         when :rotate_right
           rotate_drops(:right)
+        when :down
+          acceralate_drops
         end
       end
 
@@ -164,6 +177,7 @@ class Ochimono
       end
 
       draw_boarders
+      draw_score
 
       (@drops + @fixed_drops).each do |drop|
         x = drop.x
@@ -171,7 +185,7 @@ class Ochimono
         print "\e[#{y + 2};#{(x + 1)* 2}H#{drop.emoji} \e[0;0H"
       end
 
-      sleep 0.1
+      sleep 0.05
     end
   end
 
@@ -197,6 +211,8 @@ class Ochimono
         @commands << :rotate_left
       when 'k'
         @commands << :rotate_right
+      when ' '
+        @commands << :down
       when 'q'
         exit
       end
